@@ -117,9 +117,12 @@ XEOF
 
 	# prepare text file and add it to git repo
 	filename = "#{event_id}_#{state}.txt"
-	repo_filename = g.ls_files.keys.grep(/^#{event_id}/)[0]
+	repo_filename = g.ls_files.keys.select do |k|
+		! k.include? '_attachments/'
+	end.grep(/^#{event_id}/)[0]
 	if repo_filename && (repo_filename != filename) then
 		# filename has changed, remove old file
+		puts "removing #{repo_filename}"
 		g.remove repo_filename
 	end
 	open "#{g.dir.path}/#{filename}", 'w' do |f|
@@ -128,8 +131,7 @@ XEOF
 end
 
 begin
-	g.add
-	g.commit 'Updated from upstream'
+	g.commit 'Updated from upstream', {:add_all => true}
 rescue Git::GitExecuteError
 	puts "no changes"
 end
