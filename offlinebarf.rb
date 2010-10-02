@@ -98,4 +98,9 @@ XEOF
 	end
 	g.add filename
 end
-g.commit 'Updated from upstream'
+
+begin
+	g.commit 'Updated from upstream'
+rescue Git::GitExecuteError
+	puts "no changes"
+end
