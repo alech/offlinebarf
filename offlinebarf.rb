@@ -50,7 +50,8 @@ events.each do |event_id|
 	js = event.search('//script[@type="text/javascript"]')
 	add_ev_person_js = js.select { |j| j.inner_html[/add_event_person/] }[0]
 	rows = add_ev_person_js.inner_html.split("\n").select { |r| r[/^add_event_person/] }
-	persons = rows.map do |r|
+	statements = rows[0].split(';').select { |s| s[/add_event_person/] }
+	persons = statements.map do |r|
 		r[/add_event_person\((.*)\)/, 1].split(',').map! do |e|
 			e.gsub("'", '')
 		end[2..4]
