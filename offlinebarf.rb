@@ -128,6 +128,7 @@ XEOF
 	open "#{g.dir.path}/#{filename}", 'w' do |f|
 		f.print content
 	end
+	g.add filename
 end
 
 begin
