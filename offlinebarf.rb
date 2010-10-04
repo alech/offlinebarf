@@ -7,6 +7,8 @@ require 'git'
 require 'mime/types'
 require 'pp'
 
+UPDATE_COMMIT_MSG = 'Updated from upstream'
+
 STDIN.sync = true
 
 config = open(File.join(File.expand_path('~'), '.offlinebarf.cfg')) do |f|
@@ -18,13 +20,36 @@ g = begin
 rescue
 	Git.init(config['repo'])
 end
+
 mech = WWW::Mechanize.new
 mech.basic_auth(config['username'], config['password'])
+
+# check whether we need to 'commit' something to upstream
+g.log.each do |log|
+	if log.message != UPDATE_COMMIT_MSG then
+		# this is a user commit
+		(log.parent.diff log).entries.each do |entry|
+			event_id = entry.path[/(\d+)_rating.txt/, 1]
+			if event_id then
+				(acceptance, actuality,
+				 relevance, remark) = entry.blob.contents_array
+				puts "Rating for event #{event_id}"
+				puts "Acceptance: #{acceptance}"
+				puts "Actuality: #{actuality}"
+				puts "Relevance: #{relevance}"
+				puts "Remark: #{remark}"
+				puts
+			end
+		end
+	else
+		break # the first commit from us is where we stop
+	end
+end
 
 events_page = mech.get('https://cccv.pentabarf.org/csv/events').body
 events = events_page.split("\n").map do |event|
 	event.split(',')[0]
-end[1..-1]
+end[1..-1].sort { |a,b| b.to_i <=> a.to_i }
 
 events.each do |event_id|
 	event    = mech.get("https://cccv.pentabarf.org/event/edit/#{event_id}")
@@ -133,7 +158,7 @@ XEOF
 end
 
 begin
-	g.commit 'Updated from upstream', {:add_all => true}
+	g.commit UPDATE_COMMIT_MSG, {:add_all => true}
 rescue Git::GitExecuteError
 	puts "no changes"
 end
