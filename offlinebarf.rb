@@ -7,6 +7,35 @@ require 'git'
 require 'mime/types'
 require 'pp'
 
+def rating(first_td, second_td, type)
+	neg_search = first_td.search("span[@title='#{type}']")
+	result = '?'
+
+	# this check needs to be done due to a Pentabarf fuckup where sometimes,
+	# instead of the actuality bar, there is <respond_to?:to_str/><to_str/>
+	# in the source ... Sigh.
+	if (neg_search.size == 0) then
+		return result
+	end
+	neg = neg_search.first.attribute('class').to_s
+	if (neg == 'negative p1') then
+		result = '-'
+	elsif neg == 'negative p2' then
+		result = '--'
+	else
+		pos = second_td.search("span[@title='#{type}']").first.attribute('class').to_s
+		result = case pos
+		when 'positive p0'
+			'o'
+		when 'positive p1'
+			'+'
+		when 'positive p2'
+			'++'
+		end
+	end
+	result
+end
+
 UPDATE_COMMIT_MSG = 'Updated from upstream'
 
 STDIN.sync = true
@@ -141,10 +170,29 @@ XEOF
 		content += "- #{id}.#{ext}: #{title} (#{filename})\n"
 	end
 
+	# get ratings
+	tds = event.search('//td[@class="rating-bar-small"]')
+	if tds.size > 0 then
+		content += "\nRatings\n\n"
+	end
+	while (first_td = tds.shift)
+		rater  = event.search(first_td.path + '/../td[2]').inner_text.strip
+		remark = event.search(first_td.path + '/../td[5]').inner_text.strip
+		date   = event.search(first_td.path + '/../td[6]').inner_text.strip
+		second_td = tds.shift
+
+		content += "#{rater} at #{date}:\n"
+		content += "Acceptance: #{rating(first_td, second_td, 'Acceptance')}\n"
+		content += " Actuality: #{rating(first_td, second_td, 'Actuality')}\n"
+		content += " Relevance: #{rating(first_td, second_td, 'Relevance')}\n"
+		content += "#{remark}\n\n"
+	end
+
 	# prepare text file and add it to git repo
 	filename = "#{event_id}_#{state}.txt"
 	repo_filename = g.ls_files.keys.select do |k|
-		! k.include? '_attachments/'
+		(! k.include? '_attachments/') &&
+		(! k.include? '_rating')
 	end.grep(/^#{event_id}/)[0]
 	if repo_filename && (repo_filename != filename) then
 		# filename has changed, remove old file
