@@ -170,6 +170,24 @@ XEOF
 		content += "- #{id}.#{ext}: #{title} (#{filename})\n"
 	end
 
+	# get links
+	js = event.search('//script[@type="text/javascript"]')
+	add_link_js = js.select { |j| j.inner_html[/table_add_row\('event_link/] }[0]
+	if add_link_js then
+		content += "\nLinks\n\n"
+		rows = add_link_js.inner_html.split("\n").select { |r| r[/^table_add_row/] }
+		statements = rows[0].split(';').select { |s| s[/table_add_row/] }
+		links = statements.map do |r|
+			r[/table_add_row\((.*)\)/, 1].split(',').map! do |e|
+				e.gsub("'", '')
+			end[3..4]
+		end
+		links.each do |l|
+			content += "- #{l[0]} (#{l[1]})\n"
+		end
+		# TODO - download links and add them to repo?
+	end
+
 	# get ratings
 	tds = event.search('//td[@class="rating-bar-small"]')
 	if tds.size > 0 then
