@@ -36,6 +36,23 @@ def rating(first_td, second_td, type)
 	result
 end
 
+def rating_to_number(rating)
+	case rating.downcase
+	when '++'
+		5
+	when '+'
+		4
+	when 'o'
+		3
+	when '0'
+		3
+	when '-'
+		2
+	when '--'
+		1
+	end
+end
+
 UPDATE_COMMIT_MSG = 'Updated from upstream'
 
 STDIN.sync = true
@@ -60,14 +77,24 @@ g.log.each do |log|
 		(log.parent.diff log).entries.each do |entry|
 			event_id = entry.path[/(\d+)_rating.txt/, 1]
 			if event_id then
+				next if (! entry.blob)
 				(acceptance, actuality,
 				 relevance, remark) = entry.blob.contents_array
-				puts "Rating for event #{event_id}"
+				puts "Pushing rating for event #{event_id}"
 				puts "Acceptance: #{acceptance}"
 				puts "Actuality: #{actuality}"
 				puts "Relevance: #{relevance}"
 				puts "Remark: #{remark}"
 				puts
+				event = mech.get("https://cccv.pentabarf.org/event/edit/#{event_id}")
+				token = event.search("//input[@id='token/event/save/#{event_id}']").first.attribute('value')
+				mech.post("https://cccv.pentabarf.org/event/save/#{event_id}",
+				          'token' => token,
+				          'event[event_id]' => event_id,
+				          'event_rating[146][rating]' => rating_to_number(acceptance),
+				          'event_rating[145][rating]' => rating_to_number(actuality),
+				          'event_rating[144][rating]' => rating_to_number(relevance),
+				          'event_rating_remark[remark]' => remark)
 			end
 		end
 	else
