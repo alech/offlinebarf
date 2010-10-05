@@ -1,0 +1,42 @@
+== Description
+A quick hack to put pentabarf.cccv.org into a Git repository
+and allow users to push back ratings to the 'barf.
+
+== Installation
+Create a YAML config file in ~/.offlinebarf.cfg with
+username, password and repo keys (where repo is the path
+to the Git repository).
+
+== Usage
+Run offlinebarf.rb to download the 'barf into the Git
+repository. If you want to rate talks, create a file with
+the name <eventid>_rating.txt with four lines. The first
+line is a rating for acceptance (of the form '--', '-',
+'o', '+' or '++'), the second line a rating for actuality,
+the third line a rating for relevance and the fourth line
+is the remark. Add those files and commit them to the
+repository, then run offlinebarf.rb.
+
+== Copyright
+(c) 2010 Alexander Klink
+
+== License
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+== Warranty
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+== Author
+Alexander Klink
+offlinebarf@alech.de
+http://www.alech.de
+@alech on Twitter
+
