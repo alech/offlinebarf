@@ -71,36 +71,42 @@ mech = WWW::Mechanize.new
 mech.basic_auth(config['username'], config['password'])
 
 # check whether we need to 'commit' something to upstream
-g.log.each do |log|
-	if log.message != UPDATE_COMMIT_MSG then
-		# this is a user commit
-		(log.parent.diff log).entries.each do |entry|
-			event_id = entry.path[/(\d+)_rating.txt/, 1]
-			if event_id then
-				next if (! entry.blob)
-				(acceptance, actuality,
-				 relevance, remark) = entry.blob.contents_array
-				puts "Pushing rating for event #{event_id}"
-				puts "Acceptance: #{acceptance}"
-				puts "Actuality: #{actuality}"
-				puts "Relevance: #{relevance}"
-				puts "Remark: #{remark}"
-				puts
-				event = mech.get("https://cccv.pentabarf.org/event/edit/#{event_id}")
-				token = event.search("//input[@id='token/event/save/#{event_id}']").first.attribute('value')
-				mech.post("https://cccv.pentabarf.org/event/save/#{event_id}",
-				          'token' => token,
-				          'event[event_id]' => event_id,
-				          'event_rating[146][rating]' => rating_to_number(acceptance),
-				          'event_rating[145][rating]' => rating_to_number(actuality),
-				          'event_rating[144][rating]' => rating_to_number(relevance),
-				          'event_rating_remark[remark]' => remark)
+begin
+	g.checkout 'ratings'
+	g.log.each do |log|
+		if log.message != UPDATE_COMMIT_MSG then
+			# this is a user commit
+			(log.parent.diff log).entries.each do |entry|
+				event_id = entry.path[/(\d+)_rating.txt/, 1]
+				if event_id then
+					next if (! entry.blob)
+					(acceptance, actuality,
+					 relevance, remark) = entry.blob.contents_array
+					puts "Pushing rating for event #{event_id}"
+					puts "Acceptance: #{acceptance}"
+					puts "Actuality: #{actuality}"
+					puts "Relevance: #{relevance}"
+					puts "Remark: #{remark}"
+					puts
+					event = mech.get("https://cccv.pentabarf.org/event/edit/#{event_id}")
+					token = event.search("//input[@id='token/event/save/#{event_id}']").first.attribute('value')
+					mech.post("https://cccv.pentabarf.org/event/save/#{event_id}",
+							  'token' => token,
+								  'event[event_id]' => event_id,
+								  'event_rating[146][rating]' => rating_to_number(acceptance),
+								  'event_rating[145][rating]' => rating_to_number(actuality),
+								  'event_rating[144][rating]' => rating_to_number(relevance),
+								  'event_rating_remark[remark]' => remark)
+				end
 			end
+		else
+			break # the first commit from us is where we stop
 		end
-	else
-		break # the first commit from us is where we stop
 	end
+rescue
+	# ignore if no ratings branch
 end
+g.checkout 'master'
 
 events_page = mech.get('https://cccv.pentabarf.org/csv/events').body
 events = events_page.split("\n").map do |event|

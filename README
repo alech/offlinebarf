@@ -15,7 +15,7 @@ line is a rating for acceptance (of the form '--', '-',
 'o', '+' or '++'), the second line a rating for actuality,
 the third line a rating for relevance and the fourth line
 is the remark. Add those files and commit them to the
-repository, then run offlinebarf.rb.
+repository in the ratings branch, then run offlinebarf.rb.
 
 == Copyright
 (c) 2010 Alexander Klink
