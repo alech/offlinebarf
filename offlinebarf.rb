@@ -209,9 +209,9 @@ XEOF
 	if add_link_js then
 		content += "\nLinks\n\n"
 		rows = add_link_js.inner_html.split("\n").select { |r| r[/^table_add_row/] }
-		statements = rows[0].split(';').select { |s| s[/table_add_row/] }
+		statements = rows[0].split(';table').select { |s| s[/_add_row/] }
 		links = statements.map do |r|
-			r[/table_add_row\((.*)\)/, 1].split(',').map! do |e|
+			r[/_add_row\((.*)\)/, 1].split(',').map! do |e|
 				e.gsub("'", '')
 			end[3..4]
 		end
