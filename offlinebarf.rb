@@ -98,13 +98,13 @@ begin
 						'event_rating_remark[remark]' => remark
 					}
 					if rating_to_number(acceptance) > 0 then
-						params['event_rating[146][rating]' = rating_to_number(acceptance)
+						params['event_rating[146][rating]'] = rating_to_number(acceptance)
 					end
 					if rating_to_number(actuality) > 0 then
-						params['event_rating[145][rating]' = rating_to_number(actuality)
+						params['event_rating[145][rating]'] = rating_to_number(actuality)
 					end
 					if rating_to_number(relevance) > 0 then
-						params['event_rating[144][rating]' = rating_to_number(relevance)
+						params['event_rating[144][rating]'] = rating_to_number(relevance)
 					end
 					mech.post("https://cccv.pentabarf.org/event/save/#{event_id}",
 							  params)
