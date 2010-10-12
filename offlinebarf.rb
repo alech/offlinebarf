@@ -55,7 +55,8 @@ def rating_to_number(rating)
 	end
 end
 
-UPDATE_COMMIT_MSG = 'Updated from upstream'
+UPDATE_COMMIT_MSG             = 'Updated from upstream'
+UPDATE_COMMIT_MSG_ATTACHMENTS = 'Updated attachments from upstream'
 
 STDIN.sync = true
 
@@ -188,6 +189,11 @@ XEOF
 	content += "#{abstract}\n\n#{'-' * 80}\n#{desc}\n"
 
 	# get attachments
+	begin
+		g.checkout 'attachments'
+	rescue
+		g.checkout 'master', :new_branch => 'attachments'
+	end
 	att_links = event.search("//a[starts-with(@href,'/event/attachment/#{event_id}')]")
 	att_ids = att_links.map { |a| a.attribute('href').to_s[/\/(\d+)$/, 1] }
 	att_dir = "#{g.dir.path}/#{event_id}_attachments"
@@ -213,6 +219,7 @@ XEOF
 		g.add file
 		content += "- #{id}.#{ext}: #{title} (#{filename})\n"
 	end
+	g.checkout 'master'
 
 	# get links
 	js = event.search('//script[@type="text/javascript"]')
@@ -269,6 +276,8 @@ end
 
 begin
 	g.commit UPDATE_COMMIT_MSG, {:add_all => true}
+	g.checkout 'attachments'
+	g.commit UPDATE_COMMIT_MSG_ATTACHMENTS, {:add_all => true}
 rescue Git::GitExecuteError
 	puts "no changes"
 end
