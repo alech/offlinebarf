@@ -124,6 +124,8 @@ events = events_page.split("\n").map do |event|
 	event.split(',')[0]
 end[1..-1].sort { |a,b| b.to_i <=> a.to_i }
 
+attachments = []
+
 events.each do |event_id|
 	event    = mech.get("https://cccv.pentabarf.org/event/edit/#{event_id}")
 	notes    = event.search('//textarea[@id="event[remark]"]').inner_html
@@ -189,11 +191,6 @@ XEOF
 	content += "#{abstract}\n\n#{'-' * 80}\n#{desc}\n"
 
 	# get attachments
-	begin
-		g.checkout 'attachments'
-	rescue
-		g.checkout 'master', :new_branch => 'attachments'
-	end
 	att_links = event.search("//a[starts-with(@href,'/event/attachment/#{event_id}')]")
 	att_ids = att_links.map { |a| a.attribute('href').to_s[/\/(\d+)$/, 1] }
 	att_dir = "#{g.dir.path}/#{event_id}_attachments"
@@ -216,7 +213,7 @@ XEOF
 				f.write mech.get_file("https://cccv.pentabarf.org/event/attachment/#{event_id}/#{id}")
 			end
 		end
-		g.add file
+		attachments << file
 		content += "- #{id}.#{ext}: #{title} (#{filename})\n"
 	end
 	g.checkout 'master'
@@ -276,7 +273,14 @@ end
 
 begin
 	g.commit UPDATE_COMMIT_MSG, {:add_all => true}
-	g.checkout 'attachments'
+	begin
+		g.checkout 'attachments'
+	rescue
+		g.checkout 'master', :new_branch => 'attachments'
+	end
+	attachments.each do |file|
+		g.add file
+	end
 	g.commit UPDATE_COMMIT_MSG_ATTACHMENTS, {:add_all => true}
 rescue Git::GitExecuteError
 	puts "no changes"
