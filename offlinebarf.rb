@@ -289,7 +289,8 @@ end
 begin
 	g.checkout 'ratings'
 	g.merge 'master'
-	g.checkout 'master'
 rescue
 	# ignore if ratings branch does not exist
 end
+
+g.checkout 'master'
