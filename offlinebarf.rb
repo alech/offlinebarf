@@ -50,6 +50,8 @@ def rating_to_number(rating)
 		2
 	when '--'
 		1
+	else
+		-1
 	end
 end
 
@@ -90,13 +92,21 @@ begin
 					puts
 					event = mech.get("https://cccv.pentabarf.org/event/edit/#{event_id}")
 					token = event.search("//input[@id='token/event/save/#{event_id}']").first.attribute('value')
+					params = {
+						'token' => token,
+						'event_rating_remark[remark]' => remark
+					}
+					if rating_to_number(acceptance) > 0 then
+						params['event_rating[146][rating]' = rating_to_number(acceptance)
+					end
+					if rating_to_number(actuality) > 0 then
+						params['event_rating[145][rating]' = rating_to_number(actuality)
+					end
+					if rating_to_number(relevance) > 0 then
+						params['event_rating[144][rating]' = rating_to_number(relevance)
+					end
 					mech.post("https://cccv.pentabarf.org/event/save/#{event_id}",
-							  'token' => token,
-								  'event[event_id]' => event_id,
-								  'event_rating[146][rating]' => rating_to_number(acceptance),
-								  'event_rating[145][rating]' => rating_to_number(actuality),
-								  'event_rating[144][rating]' => rating_to_number(relevance),
-								  'event_rating_remark[remark]' => remark)
+							  params)
 				end
 			end
 		else
@@ -200,6 +210,7 @@ XEOF
 				f.write mech.get_file("https://cccv.pentabarf.org/event/attachment/#{event_id}/#{id}")
 			end
 		end
+		g.add file
 		content += "- #{id}.#{ext}: #{title} (#{filename})\n"
 	end
 
