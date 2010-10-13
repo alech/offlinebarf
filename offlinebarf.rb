@@ -281,6 +281,7 @@ begin
 	attachments.each do |file|
 		g.add file
 	end
+	g.merge 'master'
 	g.commit UPDATE_COMMIT_MSG_ATTACHMENTS, {:add_all => true}
 rescue Git::GitExecuteError
 	puts "no changes"
