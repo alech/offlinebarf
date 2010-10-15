@@ -95,7 +95,8 @@ begin
 					token = event.search("//input[@id='token/event/save/#{event_id}']").first.attribute('value')
 					params = {
 						'token' => token,
-						'event_rating_remark[remark]' => remark
+						'event_rating_remark[remark]' => remark,
+						'event[event_id]' => event_id
 					}
 					if rating_to_number(acceptance) > 0 then
 						params['event_rating[146][rating]'] = rating_to_number(acceptance)
