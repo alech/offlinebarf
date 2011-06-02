@@ -11,6 +11,10 @@ def rating(first_td, second_td, type)
 	neg_search = first_td.search("span[@title='#{type}']")
 	result = '?'
 
+	if (neg_search.size == 0) then
+		# sometimes, the type is capitalized as well, try this also
+		neg_search = first_td.search("span[@title='#{type.capitalize}']")
+	end
 	# this check needs to be done due to a Pentabarf fuckup where sometimes,
 	# instead of the actuality bar, there is <respond_to?:to_str/><to_str/>
 	# in the source ... Sigh.
@@ -23,7 +27,12 @@ def rating(first_td, second_td, type)
 	elsif neg == 'negative p2' then
 		result = '--'
 	else
-		pos = second_td.search("span[@title='#{type}']").first.attribute('class').to_s
+		pos_search = second_td.search("span[@title='#{type}']")
+		if (pos_search.size == 0) then
+			# sometimes, type is capitalized
+			pos_search = second_td.search("span[@title='#{type.capitalize}']")
+		end
+		pos = pos_search.first.attribute('class').to_s
 		result = case pos
 		when 'positive p0'
 			'o'
