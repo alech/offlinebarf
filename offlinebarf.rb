@@ -93,10 +93,15 @@ begin
 					puts
 					event = mech.get("https://cccv.pentabarf.org/event/edit/#{event_id}")
 					token = event.search("//input[@id='token/event/save/#{event_id}']").first.attribute('value')
+					# get the public flag and write it back, as not doing so might
+					# inadvertently make non-public events public
+					event_public = event.search("//input[@id='event[public]']").first.attribute('value')
+					
 					params = {
 						'token' => token,
 						'event_rating_remark[remark]' => remark,
-						'event[event_id]' => event_id
+						'event[event_id]' => event_id,
+						'event[public]' => event_public
 					}
 					if rating_to_number(acceptance) > 0 then
 						params['event_rating[146][rating]'] = rating_to_number(acceptance)
