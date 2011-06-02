@@ -249,9 +249,9 @@ XEOF
 		second_td = tds.shift
 
 		content += "#{rater} at #{date}:\n"
-		content += "Acceptance: #{rating(first_td, second_td, 'Acceptance')}\n"
-		content += " Actuality: #{rating(first_td, second_td, 'Actuality')}\n"
-		content += " Relevance: #{rating(first_td, second_td, 'Relevance')}\n"
+		content += "Acceptance: #{rating(first_td, second_td, 'acceptance')}\n"
+		content += " Actuality: #{rating(first_td, second_td, 'actuality')}\n"
+		content += " Relevance: #{rating(first_td, second_td, 'relevance')}\n"
 		content += "#{remark}\n\n"
 	end
 
