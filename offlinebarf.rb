@@ -123,7 +123,14 @@ begin
 rescue
 	# ignore if no ratings branch
 end
-g.checkout 'master'
+begin
+	g.checkout 'master'
+rescue
+	File.open '.dummyfile', 'w' do |f| end
+	g.add '.dummyfile'
+	g.commit 'initial dummy commit'
+	g.checkout 'master'
+end
 
 events_page = mech.get('https://cccv.pentabarf.org/csv/events').body
 events = events_page.split("\n").map do |event|
