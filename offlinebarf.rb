@@ -92,12 +92,9 @@ begin
 				event_id = entry.path[/(\d+)_rating.txt/, 1]
 				if event_id then
 					next if (! entry.blob)
-					(acceptance, actuality,
-					 relevance, remark) = entry.blob.contents_array
+					(acceptance, remark) = entry.blob.contents_array
 					puts "Pushing rating for event #{event_id}"
 					puts "Acceptance: #{acceptance}"
-					puts "Actuality: #{actuality}"
-					puts "Relevance: #{relevance}"
 					puts "Remark: #{remark}"
 					puts
 					event = mech.get("https://cccv.pentabarf.org/event/edit/#{event_id}")
@@ -113,13 +110,7 @@ begin
 						'event[public]' => event_public
 					}
 					if rating_to_number(acceptance) > 0 then
-						params['event_rating[146][rating]'] = rating_to_number(acceptance)
-					end
-					if rating_to_number(actuality) > 0 then
-						params['event_rating[145][rating]'] = rating_to_number(actuality)
-					end
-					if rating_to_number(relevance) > 0 then
-						params['event_rating[144][rating]'] = rating_to_number(relevance)
+						params['event_rating[153][rating]'] = rating_to_number(acceptance)
 					end
 					mech.post("https://cccv.pentabarf.org/event/save/#{event_id}",
 							  params)
@@ -264,8 +255,6 @@ XEOF
 
 		content += "#{rater} at #{date}:\n"
 		content += "Acceptance: #{rating(first_td, second_td, 'acceptance')}\n"
-		content += " Actuality: #{rating(first_td, second_td, 'actuality')}\n"
-		content += " Relevance: #{rating(first_td, second_td, 'relevance')}\n"
 		content += "#{remark}\n\n"
 	end
 
