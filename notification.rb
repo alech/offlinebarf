@@ -163,5 +163,9 @@ events.each do |event_id|
 	)
 	correspond_ticket(rt, rt_id, content)
 
-	# TODO: add link in Pentabarf to ticket, set status to confirmed/reconfirmed
+	next_state = (state == 'accepted') ? 'confirmed' : 'reconfirmed'
+	event.forms[2].field_with(:id => 'event[event_state_progress]').value = next_state
+	event.forms[2].submit
+
+	# TODO: add link in Pentabarf to ticket
 end
