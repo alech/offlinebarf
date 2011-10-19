@@ -7,6 +7,7 @@ require 'pp'
 require 'erb'
 require 'rt/client'
 require 'uri'
+require 'digest/md5'
 
 # work around a problem in rt/client, rt.correspond does not work there,
 # so do it manually via mechanize
@@ -30,6 +31,8 @@ end
 
 ACCEPTANCE_SUBJECT = 'Acceptance'
 REJECTION_SUBJECT  = 'Rejection'
+DEFAULT_EVENT_IMAGE_MD5 = '8edbc805920bcaf3d788db4e1d33b254'
+
 COORDINATORS = {
 	# ID => [ 'RT username', 'signature']
 	'2014' => [ 'alech', 'Alex' ]
@@ -38,6 +41,7 @@ RT_SERVER = 'https://rt.cccv.de'
 RT_COOKIE_DOMAIN = 'rt.cccv.de'
 RT_COOKIE_PATH   = '/'
 RT_QUEUE  = '28c3-content'
+@proceedings = true
 
 STDIN.sync = true
 
@@ -72,6 +76,8 @@ events.each do |event_id|
 	                        '/option[@selected]').attr('value').to_s
 	lang     = event.search('//select[@id="event[language]"]' \
 	                        '/option[@selected]').attr('value').to_s
+	@paper   = event.search('//select[@id="event[paper]"]' \
+	                        '/option[@selected]').attr('value').to_s == 'true'
 	if lang != 'de' && lang != 'en' then
 		lang = 'en' # default to english if language is not set
 	end
@@ -81,7 +87,6 @@ events.each do |event_id|
 	puts "#{event_id} - #{state} - #{@title} - #{progress} - #{lang} - #{type}"
 	next if type == 'workshop'
 	next if progress == 'confirmed' || progress == 'reconfirmed'
-	pp state.inspect
 	next if state != 'accepted' && state != 'rejected'
 	puts "Sending out notification"
 
@@ -105,10 +110,32 @@ events.each do |event_id|
 
 	persons = persons.select { |p| p[1] == 'speaker' }.map { |p| p[0] }
 
-	# get mail addresses from user pages
+	# get logo to see if it is custom
+	@custom_logo = false
+	logo = mech.get("https://cccv.pentabarf.org/image/event/#{event_id}.128x128").body
+	if Digest::MD5.hexdigest(logo) != DEFAULT_EVENT_IMAGE_MD5 then
+		@custom_logo = true
+	end
+
+	# get mail addresses and user detailsfrom user pages
 	@recipients = []
+	@availability_filled_out   = true
+	@person_details_filled_out = true
 	persons.each do |p|
 		user_page = mech.get("https://cccv.pentabarf.org/person/edit/#{p}")
+		availability_checkboxes = user_page.forms[1].checkboxes.select { |c| c.name[/person_availability/] }
+		availability_amount     = availability_checkboxes.select { |c| c.checked }.size
+		non_availability_amount = availability_checkboxes.select { |c| ! c.checked }.size
+		if availability_amount == 0 || non_availability_amount == 0 then
+			# if availability is all checked or all not, this does not look
+			# like conscious thought
+			@availability_filled_out = false
+		end
+		person_abstract_size = user_page.search('//textarea[@id="conference_person[abstract]"]').first.inner_html.size
+		person_description_size = user_page.search('//textarea[@id="conference_person[description]"]').first.inner_html.size
+		if (person_abstract_size + person_description_size) == 0 then
+			@person_details_filled_out = false
+		end
 		@recipients << [
 			user_page.search('//input[@id="person[public_name]"]').first.attr('value'),
 			user_page.search('//input[@id="person[email]"]').first.attr('value'),
