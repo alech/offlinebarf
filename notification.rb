@@ -165,7 +165,9 @@ events.each do |event_id|
 
 	next_state = (state == 'accepted') ? 'confirmed' : 'reconfirmed'
 	event.forms[2].field_with(:id => 'event[event_state_progress]').value = next_state
+	# link to RT
+	event.forms[2]['event_link_internal[0][link_type]'] = 'rt cccv'
+	event.forms[2]['event_link_internal[0][url]'] = "#{rt_id}"
+	event.forms[2]['event_link_internal[0][description]'] = state
 	event.forms[2].submit
-
-	# TODO: add link in Pentabarf to ticket
 end
