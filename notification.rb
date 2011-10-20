@@ -33,10 +33,10 @@ ACCEPTANCE_SUBJECT = 'Acceptance'
 REJECTION_SUBJECT  = 'Rejection'
 DEFAULT_EVENT_IMAGE_MD5 = '8edbc805920bcaf3d788db4e1d33b254'
 
-COORDINATORS = {
-	# ID => [ 'RT username', 'signature']
-	'2014' => [ 'alech', 'Alex' ]
-}
+COORDINATORS = open(File.join(File.expand_path('~'), '.offlinebarf.coordinators')) do |f|
+	YAML.load(f)
+end
+
 RT_SERVER = 'https://rt.cccv.de'
 RT_COOKIE_DOMAIN = 'rt.cccv.de'
 RT_COOKIE_PATH   = '/'
