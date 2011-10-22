@@ -82,6 +82,7 @@ rt = RT_Client.new(
 # testing
 events = [ '4868' ]
 
+i = 0
 events.each do |event_id|
 	event    = mech.get("https://cccv.pentabarf.org/event/edit/#{event_id}")
 	@title    = event.search('//input[@id="event[title]"]').attr('value').to_s
@@ -206,4 +207,6 @@ events.each do |event_id|
 	event.forms[2]['event_link_internal[0][url]'] = "#{rt_id}"
 	event.forms[2]['event_link_internal[0][description]'] = state
 	event.forms[2].submit
+	i += 1
+	break if i == 5 # do 5 at a time for now to avoid fuckups
 end
