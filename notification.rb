@@ -11,7 +11,7 @@ require 'digest/md5'
 
 # work around a problem in rt/client, rt.correspond does not work there,
 # so do it manually via mechanize
-def correspond_ticket(rt, id, text)
+def update_ticket(rt, id, text, action, next_state)
 	cookie_key, cookie_value = rt.cookie.split("=")
 	cookie = Mechanize::Cookie.new(cookie_key, cookie_value)
 	cookie.domain = RT_COOKIE_DOMAIN
@@ -19,19 +19,34 @@ def correspond_ticket(rt, id, text)
 
 	mechrt = Mechanize.new
 	mechrt.cookie_jar.add(URI.parse(RT_SERVER), cookie)
-	page = mechrt.get("https://rt.cccv.de/Ticket/Update.html?Action=Respond&id=#{id}")
+	page = mechrt.get("https://rt.cccv.de/Ticket/Update.html?Action=#{action}&id=#{id}")
 	f = page.form_with(:name => 'TicketUpdate')
 
 	f.textareas[0].value = text
-	# set status to 'stalled' so ticket does not show up on list of open tickets
-	# gets changed to open once requestor replies
-	f.fields_with(:name => 'Status').first.value = 'stalled'
+	# set status to next_state
+	f.fields_with(:name => 'Status').first.value = next_state
 	f.click_button f.button_with(:name => 'SubmitTicket')
+end
+
+def set_pentabarf_url_custom_field(rt, id, event_id)
+	cookie_key, cookie_value = rt.cookie.split("=")
+	cookie = Mechanize::Cookie.new(cookie_key, cookie_value)
+	cookie.domain = RT_COOKIE_DOMAIN
+	cookie.path   = RT_COOKIE_PATH
+
+	mechrt = Mechanize.new
+	mechrt.cookie_jar.add(URI.parse(RT_SERVER), cookie)
+	page = mechrt.get("https://rt.cccv.de/Ticket/Modify.html?id=#{id}")
+	f = page.form_with(:action => 'Modify.html')
+
+	f.textareas[1].value = "https://cccv.pentabarf.org/event/edit/#{event_id}"
+	f.submit
 end
 
 ACCEPTANCE_SUBJECT = 'Acceptance'
 REJECTION_SUBJECT  = 'Rejection'
 DEFAULT_EVENT_IMAGE_MD5 = '8edbc805920bcaf3d788db4e1d33b254'
+EMPTY_SMALL_SIZE = 100
 
 COORDINATORS = open(File.join(File.expand_path('~'), '.offlinebarf.coordinators')) do |f|
 	YAML.load(f)
@@ -78,6 +93,19 @@ events.each do |event_id|
 	                        '/option[@selected]').attr('value').to_s
 	@paper   = event.search('//select[@id="event[paper]"]' \
 	                        '/option[@selected]').attr('value').to_s == 'true'
+	slides  = event.search('//select[@id="event[slides]"]/option[@selected]').inner_text
+	@slides_unknown = false
+	if slides == 'unknown' then
+		@slides_unknown = true
+	end
+
+	abstract    = event.search('//textarea[@id="event[abstract]"]').inner_text
+	description = event.search('//textarea[@id="event[description]"]').inner_text
+	@details_empty = false
+	if abstract.size + description.size < EMPTY_SMALL_SIZE then
+		@details_empty = true
+	end
+
 	if lang != 'de' && lang != 'en' then
 		lang = 'en' # default to english if language is not set
 	end
@@ -86,7 +114,7 @@ events.each do |event_id|
 	# ignore workshops, already confirmed/reconfirmed events and undecided ones
 	puts "#{event_id} - #{state} - #{@title} - #{progress} - #{lang} - #{type}"
 	next if type == 'workshop'
-	next if progress == 'confirmed' || progress == 'reconfirmed'
+	next if progress != 'unconfirmed'
 	next if state != 'accepted' && state != 'rejected'
 	puts "Sending out notification"
 
@@ -159,12 +187,20 @@ events.each do |event_id|
 		:Owner      => COORDINATORS[coordinator][0],
 		:Requestors => @recipients.map { |r| r[1] }.join(', '),
 		:Text       => "#{state}. automatic notification via notification.rb"
-		# TODO Pentabarf-URL custom field
 	)
-	correspond_ticket(rt, rt_id, content)
+	set_pentabarf_url_custom_field(rt, rt_id, event_id)
 
-	next_state = (state == 'accepted') ? 'confirmed' : 'reconfirmed'
-	event.forms[2].field_with(:id => 'event[event_state_progress]').value = next_state
+	if state == 'accepted' then
+		# for accepted talks, add the talk as comment first, needs to be
+		# copy-and-pasted manually by the coordinators.
+		update_ticket(rt, rt_id, content, 'Comment', 'open')
+	else
+		update_ticket(rt, rt_id, content, 'Respond', 'resolved')
+	end
+
+	# FIXME: do we set confirmed on accepted tickets when mail is not yet sent
+	# out?
+	event.forms[2].field_with(:id => 'event[event_state_progress]').value = 'confirmed'
 	# link to RT
 	event.forms[2]['event_link_internal[0][link_type]'] = 'rt cccv'
 	event.forms[2]['event_link_internal[0][url]'] = "#{rt_id}"
