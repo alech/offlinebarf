@@ -196,12 +196,12 @@ events.each do |event_id|
 		# copy-and-pasted manually by the coordinators.
 		update_ticket(rt, rt_id, content, 'Comment', 'open')
 	else
+		# maybe use Comment for rejections as well so that details can be
+		# added. OTOH, they can be added in a separate reply as well ...?
 		update_ticket(rt, rt_id, content, 'Respond', 'resolved')
+		event.forms[2].field_with(:id => 'event[event_state_progress]').value = 'confirmed'
 	end
 
-	# FIXME: do we set confirmed on accepted tickets when mail is not yet sent
-	# out?
-	event.forms[2].field_with(:id => 'event[event_state_progress]').value = 'confirmed'
 	# link to RT
 	event.forms[2]['event_link_internal[0][link_type]'] = 'rt cccv'
 	event.forms[2]['event_link_internal[0][url]'] = "#{rt_id}"
