@@ -117,7 +117,6 @@ events.each do |event_id|
 	next if type == 'workshop'
 	next if progress != 'unconfirmed'
 	next if state != 'accepted' && state != 'rejected'
-	puts "Sending out notification"
 
 
 	# get event persons
@@ -130,6 +129,19 @@ events.each do |event_id|
 			e.gsub("'", '')
 		end[2..4]
 	end
+
+	# check if RT ticket already exists
+	table_add_row_js = js.select { |j| j.inner_html[/table_add_row/] }[0]
+	if table_add_row_js then
+		rows = table_add_row_js.inner_html.split("\n").select { |r| r[/^table_add_row/] }
+		statements = rows[0].split(';').select { |s| s[/table_add_row/] }
+		if (statements.select { |s| s[/rt cccv/] && s[/accepted/] }.size > 0) ||
+		   (statements.select { |s| s[/rt cccv/] && s[/rejected/] }.size > 0) then
+			next
+		end
+	end
+
+	puts "Sending out notification"
 	coordinator = persons.select { |p| p[1] == 'coordinator' }.map { |p| p[0] }.first
 	if ! coordinator || ! COORDINATORS[coordinator] then
 		STDERR.puts "No (known) coordinator, skipping #{event_id}"
