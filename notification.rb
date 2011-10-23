@@ -24,8 +24,10 @@ def update_ticket(rt, id, text, action, next_state)
 
 	f.textareas[0].value = text
 	# set status to next_state
-	f.fields_with(:name => 'Status').first.value = next_state
-	f.click_button f.button_with(:name => 'SubmitTicket')
+	if next_state then
+		f.fields_with(:name => 'Status').first.value = next_state
+		f.click_button f.button_with(:name => 'SubmitTicket')
+	end
 end
 
 def set_pentabarf_url_custom_field(rt, id, event_id)
@@ -86,6 +88,7 @@ i = 0
 events.each do |event_id|
 	event    = mech.get("https://cccv.pentabarf.org/event/edit/#{event_id}")
 	@title    = event.search('//input[@id="event[title]"]').attr('value').to_s
+	notes    = event.search('//textarea[@id="event[remark]"]').inner_html
 	state    = event.search('//select[@id="event[event_state]"]' \
 	                        '/option[@selected]').attr('value').to_s
 	progress = event.search('//select[@id="event[event_state_progress]"]' \
@@ -141,7 +144,6 @@ events.each do |event_id|
 		end
 	end
 
-	puts "Sending out notification"
 	coordinator = persons.select { |p| p[1] == 'coordinator' }.map { |p| p[0] }.first
 	if ! coordinator || ! COORDINATORS[coordinator] then
 		STDERR.puts "No (known) coordinator, skipping #{event_id}"
@@ -150,6 +152,9 @@ events.each do |event_id|
 	@coordinator_sig = COORDINATORS[coordinator][1]
 
 	persons = persons.select { |p| p[1] == 'speaker' }.map { |p| p[0] }
+	# skip if no speakers present
+	next if persons.size == 0
+	puts "Sending out notification"
 
 	# get logo to see if it is custom
 	@custom_logo = false
@@ -204,6 +209,11 @@ events.each do |event_id|
 	set_pentabarf_url_custom_field(rt, rt_id, event_id)
 
 	update_ticket(rt, rt_id, content, 'Comment', 'open')
+
+	# copy notes from pentabarf if non-empty
+	if notes.size > 0 then
+		update_ticket(rt, rt_id, "Notes from Pentabarf:\n#{notes}", nil)
+	end
 
 	# link to RT
 	event.forms[2]['event_link_internal[0][link_type]'] = 'rt cccv'
