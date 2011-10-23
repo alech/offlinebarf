@@ -134,15 +134,16 @@ events.each do |event_id|
 	end
 
 	# check if RT ticket already exists
-	table_add_row_js = js.select { |j| j.inner_html[/table_add_row/] }[0]
-	if table_add_row_js then
+	already_has_ticket = false
+	js.select { |j| j.inner_html[/table_add_row/] }.each do |table_add_row_js|
 		rows = table_add_row_js.inner_html.split("\n").select { |r| r[/^table_add_row/] }
 		statements = rows[0].split(';').select { |s| s[/table_add_row/] }
 		if (statements.select { |s| s[/rt cccv/] && s[/accepted/] }.size > 0) ||
 		   (statements.select { |s| s[/rt cccv/] && s[/rejected/] }.size > 0) then
-			next
+			already_has_ticket = true
 		end
 	end
+	next if already_has_ticket
 
 	coordinator = persons.select { |p| p[1] == 'coordinator' }.map { |p| p[0] }.first
 	if ! coordinator || ! COORDINATORS[coordinator] then
