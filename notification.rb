@@ -191,16 +191,7 @@ events.each do |event_id|
 	)
 	set_pentabarf_url_custom_field(rt, rt_id, event_id)
 
-	if state == 'accepted' then
-		# for accepted talks, add the talk as comment first, needs to be
-		# copy-and-pasted manually by the coordinators.
-		update_ticket(rt, rt_id, content, 'Comment', 'open')
-	else
-		# maybe use Comment for rejections as well so that details can be
-		# added. OTOH, they can be added in a separate reply as well ...?
-		update_ticket(rt, rt_id, content, 'Respond', 'resolved')
-		event.forms[2].field_with(:id => 'event[event_state_progress]').value = 'confirmed'
-	end
+	update_ticket(rt, rt_id, content, 'Comment', 'open')
 
 	# link to RT
 	event.forms[2]['event_link_internal[0][link_type]'] = 'rt cccv'
