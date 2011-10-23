@@ -11,7 +11,7 @@ require 'digest/md5'
 
 # work around a problem in rt/client, rt.correspond does not work there,
 # so do it manually via mechanize
-def update_ticket(rt, id, text, action, next_state)
+def update_ticket(rt, id, text, action, next_state = nil)
 	cookie_key, cookie_value = rt.cookie.split("=")
 	cookie = Mechanize::Cookie.new(cookie_key, cookie_value)
 	cookie.domain = RT_COOKIE_DOMAIN
@@ -26,8 +26,8 @@ def update_ticket(rt, id, text, action, next_state)
 	# set status to next_state
 	if next_state then
 		f.fields_with(:name => 'Status').first.value = next_state
-		f.click_button f.button_with(:name => 'SubmitTicket')
 	end
+	f.click_button f.button_with(:name => 'SubmitTicket')
 end
 
 def set_pentabarf_url_custom_field(rt, id, event_id)
@@ -212,7 +212,7 @@ events.each do |event_id|
 
 	# copy notes from pentabarf if non-empty
 	if notes.size > 0 then
-		update_ticket(rt, rt_id, "Notes from Pentabarf:\n#{notes}", nil)
+		update_ticket(rt, rt_id, "Notes from Pentabarf:\n#{notes}", 'Comment')
 	end
 
 	# link to RT
