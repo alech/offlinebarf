@@ -76,13 +76,13 @@ rt = RT_Client.new(
 )
 
 # get all event IDs
-#events_page = mech.get('https://cccv.pentabarf.org/csv/events').body
-#events = events_page.split("\n").map do |event|
-#	event.split(',')[0]
-#end[1..-1].sort { |a,b| b.to_i <=> a.to_i }
+events_page = mech.get('https://cccv.pentabarf.org/csv/events').body
+events = events_page.split("\n").map do |event|
+	event.split(',')[0]
+end[1..-1].sort { |a,b| b.to_i <=> a.to_i }
 
 # testing
-events = [ '4868' ]
+# events = [ '4868' ]
 
 i = 0
 events.each do |event_id|
@@ -221,5 +221,5 @@ events.each do |event_id|
 	event.forms[2]['event_link_internal[0][description]'] = state
 	event.forms[2].submit
 	i += 1
-	break if i == 5 # do 5 at a time for now to avoid fuckups
+	break if i == 10 # do 10 at a time for now to avoid fuckups
 end
