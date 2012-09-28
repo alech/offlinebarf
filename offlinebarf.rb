@@ -79,7 +79,7 @@ rescue
 	Git.init(config['repo'])
 end
 
-mech = WWW::Mechanize.new
+mech = Mechanize.new
 mech.basic_auth(config['username'], config['password'])
 
 # check whether we need to 'commit' something to upstream
