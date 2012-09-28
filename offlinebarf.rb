@@ -176,6 +176,9 @@ events.each do |event_id|
 		end
 	end
 
+	# get creation time, a td which has something that looks like a date inside
+	creation_time = event.search('//td').find { |t| t.inner_text =~ /\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}/ }.inner_text
+
 	content =<<"XEOF"
 #{event_id} - #{title}
 #{subtitle}
@@ -198,6 +201,7 @@ State:    #{state}
 Progress: #{progress}
 Language: #{lang}
 Type:     #{type}
+Created:  #{creation_time}
 
 XEOF
 	if (s_notes != '') && (s_notes != "see abstract and description") then
