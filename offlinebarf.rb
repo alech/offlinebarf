@@ -160,17 +160,20 @@ events.each do |event_id|
 	puts "#{event_id} - #{state} - #{title}"
 
 	# get event persons
+	persons = []
 	js = event.search('//script[@type="text/javascript"]')
 	add_ev_person_js = js.select { |j| j.inner_html[/add_event_person/] }[0]
-	rows = add_ev_person_js.inner_html.split("\n").select { |r| r[/^add_event_person/] }
-	statements = rows[0].split(';').select { |s| s[/add_event_person/] }
-	persons = statements.map do |r|
-		r[/add_event_person\((.*)\)/, 1].split(',').map! do |e|
-			e.gsub("'", '')
-		end[2..4]
-	end
-	persons.each do |p|
-		p[0] = event.search("//select[@id='event_person[row_id][person_id]']/option[@value='#{p[0]}']").inner_html
+	if add_ev_person_js != nil then # only if persons are present
+		rows = add_ev_person_js.inner_html.split("\n").select { |r| r[/^add_event_person/] }
+		statements = rows[0].split(';').select { |s| s[/add_event_person/] }
+		persons = statements.map do |r|
+			r[/add_event_person\((.*)\)/, 1].split(',').map! do |e|
+				e.gsub("'", '')
+			end[2..4]
+		end
+		persons.each do |p|
+			p[0] = event.search("//select[@id='event_person[row_id][person_id]']/option[@value='#{p[0]}']").inner_html
+		end
 	end
 
 	content =<<"XEOF"
